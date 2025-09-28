@@ -373,3 +373,6 @@ def conversation_summary(request: SummaryRequest):
         "selected_policy": policy if policy else "Not found",
         "disclaimer": "This is a mock recommendation. I do not provide legal/tax advice. Returns are guaranteed only if explicitly stated."
     }
+@app.get("/")
+def root():
+    return {"message": "Welcome to Insurance Bot API! Go to /docs for API details."}
