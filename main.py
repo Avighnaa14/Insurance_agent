@@ -1,13 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict, Any
 import random
-from sqlalchemy.orm import Session
-from database import engine, Base, get_db
-from models import HandoffTicket, QuoteHistory, ConversationSummary
-
-# Initialize database
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Insurance Bot APIs")
 
@@ -26,7 +20,7 @@ POLICIES = [
         "exclusions": ["cosmetic procedures", "pre-existing for 24 months"],
         "riders": [{"id": "HOS_CASH", "name": "Hospital Cash", "premium": 1200}]
     },
-    # (⚡ Keep the rest of your 23 policies here)
+    # (⚡ Add the rest of your 23 mock policies here)
 ]
 
 # -------------------------------------------------------------------
@@ -67,7 +61,7 @@ def get_policies():
 
 
 @app.post("/quote")
-def get_quote(request: QuoteRequest, db: Session = Depends(get_db)):
+def get_quote(request: QuoteRequest):
     """Returns top 3 recommended policies"""
     recommended = random.sample(POLICIES, 3)
     response = []
@@ -81,33 +75,13 @@ def get_quote(request: QuoteRequest, db: Session = Depends(get_db)):
             "premium": premium,
             "reason": reason
         })
-
-    # Save in DB
-    history = QuoteHistory(
-        customer_profile=request.dict(),
-        recommended_policies=response
-    )
-    db.add(history)
-    db.commit()
-
     return {"recommended_plans": response}
 
 
 @app.post("/handoff")
-def create_handoff(request: HandoffRequest, db: Session = Depends(get_db)):
+def create_handoff(request: HandoffRequest):
     """Creates a callback/live transfer ticket"""
     ticket_id = f"TICKET_{random.randint(1000,9999)}"
-
-    # Save in DB
-    ticket = HandoffTicket(
-        ticket_id=ticket_id,
-        customer_name=request.name,
-        phone=request.phone,
-        reason=request.reason
-    )
-    db.add(ticket)
-    db.commit()
-
     return {
         "status": "handoff_created",
         "ticket_id": ticket_id,
@@ -137,18 +111,9 @@ def compare_policies(request: CompareRequest):
 
 
 @app.post("/summary")
-def conversation_summary(request: SummaryRequest, db: Session = Depends(get_db)):
+def conversation_summary(request: SummaryRequest):
     """Summarize customer profile and selected policy"""
     policy = next((p for p in POLICIES if p["policy_id"] == request.selected_policy), None)
-
-    summary = ConversationSummary(
-        profile=request.profile,
-        selected_policy=request.selected_policy,
-        disclaimer="This is a mock recommendation. I do not provide legal/tax advice."
-    )
-    db.add(summary)
-    db.commit()
-
     return {
         "profile": request.profile,
         "selected_policy": policy if policy else "Not found",
