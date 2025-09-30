@@ -1,18 +1,22 @@
-from twilio.rest import Client
+# utils/twilio_client.py
 import os
+from twilio.rest import Client
 
-# ⚠️ You’ll set these in Render Environment Variables later
-account_sid = os.getenv("TWILIO_SID")
-auth_token = os.getenv("TWILIO_AUTH")
-twilio_number = os.getenv("TWILIO_PHONE")
+TWILIO_SID = os.getenv("TWILIO_SID")
+TWILIO_AUTH = os.getenv("TWILIO_AUTH")
+TWILIO_PHONE = os.getenv("TWILIO_PHONE")  # your Twilio phone number in +country format
 
-client = Client(account_sid, auth_token)
+client = None
+if TWILIO_SID and TWILIO_AUTH:
+    client = Client(TWILIO_SID, TWILIO_AUTH)
 
 def send_sms(to: str, body: str):
-    """Send an SMS using Twilio"""
+    """Send an SMS via Twilio. Returns message SID or raises."""
+    if client is None:
+        raise RuntimeError("Twilio client not configured. Set TWILIO_SID and TWILIO_AUTH env vars.")
     message = client.messages.create(
         body=body,
-        from_=twilio_number,
+        from_=TWILIO_PHONE,
         to=to
     )
     return message.sid
