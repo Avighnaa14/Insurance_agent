@@ -1,5 +1,5 @@
-fastapi
-uvicorn
-sqlalchemy
-twilio
-sendgrid
+fastapi==0.117.1
+uvicorn==0.22.0
+sqlalchemy==2.0.43
+psycopg2-binary==2.9.9   # needed for PostgreSQL on Render
+python-dotenv==1.0.1     # optional: load .env locally for testing
